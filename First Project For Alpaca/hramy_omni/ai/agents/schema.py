@@ -34,17 +34,24 @@ VALID_STRATEGY_TYPES = {
     "NONE",
 }
 VALID_RISK = {"LOW", "MEDIUM", "HIGH"}
-VALID_REGIMES = {"BULLISH", "BEARISH", "SIDEWAYS"}
+VALID_REGIMES = {
+    "BULL_TREND",
+    "BEAR_TREND",
+    "SIDEWAYS",
+    "BREAKOUT",
+    "HIGH_VOLATILITY",
+    "LOW_VOLATILITY",
+}
 VALID_VERDICTS = {"PROCEED", "BLOCK"}
 VALID_SOURCES = {"groq", "local_policy", "fallback"}
 
-# Numeric bounds – the AI can NEVER propose outside these limits
-# (even if the LLM hallucinates, we clamp to these safe ranges)
+# Sane numeric bounds - the AI can NEVER propose outside these,
+# no matter what the LLM says. This is what "clamping" means here.
 DTE_MIN, DTE_MAX = 1, 60
 DELTA_MIN, DELTA_MAX = 0.05, 0.60
 SPREAD_WIDTH_MIN, SPREAD_WIDTH_MAX = 1, 20
 CONTRACTS_MIN, CONTRACTS_MAX = 0, 10
-# ------------------------------------------------------------------
+
 # Failure type codes – safe to log; never contain secrets
 FAIL_NOT_CONFIGURED = "not_configured"
 FAIL_SDK_MISSING = "sdk_missing"
@@ -76,7 +83,6 @@ def _clamp(value: float, low: float, high: float) -> float:
 
 
 def _clean_string_list(value, max_items=10, max_len=400) -> list:
-    """Coerce any input into a clean list of non‑empty strings (truncated)."""
     if isinstance(value, str):
         value = [value]
     if not isinstance(value, list):
@@ -96,7 +102,7 @@ def _clean_string_list(value, max_items=10, max_len=400) -> list:
 def safe_fallback(reason: str, failure_type: str = FAIL_UNKNOWN, symbol: str = "") -> dict:
     """
     Always returns a 100% contract-valid TradeDecision.
-    Call this on ANY error  (network, schema violation, Groq failure, etc.), anywhere in the pipeline, and you are safe.
+    Call this on ANY error, anywhere in the pipeline, and you are safe.
     """
     return {
         "action": "HOLD",
@@ -135,7 +141,6 @@ def validate_trade_decision(raw: dict, symbol: str = "", source: str = "local_po
     100% valid TradeDecision. Never raises. Never lets an LLM value
     escape un-clamped.
     """
-    # If the input isn't even a dict, return a safe fallback immediately.
     if not isinstance(raw, dict):
         return safe_fallback("Strategist output was not a JSON object.", FAIL_SCHEMA, symbol)
 
@@ -201,6 +206,7 @@ def validate_trade_decision(raw: dict, symbol: str = "", source: str = "local_po
         result["engine"] = "NONE"
         result["strategy_type"] = "NONE"
         result["contracts"] = 0
+
     # Important: If Devil's Advocate says BLOCK, then we CANNOT OPEN a trade
     # According to Part 5 of the specification, BLOCK must downgrade OPEN to HOLD
     # So we override the action and clear all trading fields
