@@ -1,0 +1,178 @@
+
+--- Running TestIndicators ---
+test_adx_bounds (tests.test_analysis.TestIndicators.test_adx_bounds) ... ok
+test_all_indicator_columns_present (tests.test_analysis.TestIndicators.test_all_indicator_columns_present) ... ok
+test_atr_positive (tests.test_analysis.TestIndicators.test_atr_positive) ... ok
+test_ema_converges_to_price (tests.test_analysis.TestIndicators.test_ema_converges_to_price) ... ok
+test_insufficient_data_raises (tests.test_analysis.TestIndicators.test_insufficient_data_raises) ... ok
+test_macd_identity (tests.test_analysis.TestIndicators.test_macd_identity) ... ok
+test_rsi_all_gains_is_high (tests.test_analysis.TestIndicators.test_rsi_all_gains_is_high) ... ok
+test_rsi_bounds (tests.test_analysis.TestIndicators.test_rsi_bounds) ... ok
+test_sma_known_values (tests.test_analysis.TestIndicators.test_sma_known_values) ... ok
+test_snapshot_complete_and_finite (tests.test_analysis.TestIndicators.test_snapshot_complete_and_finite) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.145s
+
+OK
+TestIndicators: 10 run, 0 failed, 0 errors
+
+--- Running TestSignals ---
+test_bullish_structure (tests.test_analysis.TestSignals.test_bullish_structure) ... ok
+test_deterministic (tests.test_analysis.TestSignals.test_deterministic) ... ok
+test_score_bounds_random_snapshots (tests.test_analysis.TestSignals.test_score_bounds_random_snapshots) ... ok
+test_strong_downtrend_scores_negative (tests.test_analysis.TestSignals.test_strong_downtrend_scores_negative) ... ok
+test_strong_uptrend_scores_positive (tests.test_analysis.TestSignals.test_strong_uptrend_scores_positive) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.015s
+
+OK
+TestSignals: 5 run, 0 failed, 0 errors
+
+--- Running TestRegime ---
+test_bear_trend_detected (tests.test_analysis.TestRegime.test_bear_trend_detected) ... ok
+test_bull_trend_detected (tests.test_analysis.TestRegime.test_bull_trend_detected) ... ok
+test_high_volatility_detected (tests.test_analysis.TestRegime.test_high_volatility_detected) ... ok
+test_low_volatility_detected (tests.test_analysis.TestRegime.test_low_volatility_detected) ... ok
+test_regime_is_deterministic (tests.test_analysis.TestRegime.test_regime_is_deterministic) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.000s
+
+OK
+TestRegime: 5 run, 0 failed, 0 errors
+
+--- Running TestAIValidation ---
+test_ai_supplied_prices_are_dropped (tests.test_ai_risk_portfolio.TestAIValidation.test_ai_supplied_prices_are_dropped) ... ok
+test_buy_with_zero_size_gets_floor (tests.test_ai_risk_portfolio.TestAIValidation.test_buy_with_zero_size_gets_floor) ... ok
+test_confidence_clamped_to_unit_interval (tests.test_ai_risk_portfolio.TestAIValidation.test_confidence_clamped_to_unit_interval) ... ok
+test_extract_json_embedded_in_prose (tests.test_ai_risk_portfolio.TestAIValidation.test_extract_json_embedded_in_prose) ... ok
+test_extract_json_garbage_raises (tests.test_ai_risk_portfolio.TestAIValidation.test_extract_json_garbage_raises) ... ok
+test_extract_json_markdown_fence (tests.test_ai_risk_portfolio.TestAIValidation.test_extract_json_markdown_fence) ... ok
+test_extract_json_plain (tests.test_ai_risk_portfolio.TestAIValidation.test_extract_json_plain) ... ok
+test_hold_forces_zero_size (tests.test_ai_risk_portfolio.TestAIValidation.test_hold_forces_zero_size) ... ok
+test_invalid_decision_becomes_safe_hold (tests.test_ai_risk_portfolio.TestAIValidation.test_invalid_decision_becomes_safe_hold) ... ok
+test_invalid_risk_becomes_safe_hold (tests.test_ai_risk_portfolio.TestAIValidation.test_invalid_risk_becomes_safe_hold) ... ok
+test_position_size_clamped_to_cap (tests.test_ai_risk_portfolio.TestAIValidation.test_position_size_clamped_to_cap) ... ok
+test_stop_and_target_clamped (tests.test_ai_risk_portfolio.TestAIValidation.test_stop_and_target_clamped) ... ok
+test_valid_decision_passes (tests.test_ai_risk_portfolio.TestAIValidation.test_valid_decision_passes) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 0.001s
+
+OK
+TestAIValidation: 13 run, 0 failed, 0 errors
+
+--- Running TestRiskManager ---
+test_bear_regime_blocks_buy (tests.test_ai_risk_portfolio.TestRiskManager.test_bear_regime_blocks_buy) ... ok
+test_blocked_decision_yields_hold_plan (tests.test_ai_risk_portfolio.TestRiskManager.test_blocked_decision_yields_hold_plan) ... ok
+test_exposure_cap_blocks_buy (tests.test_ai_risk_portfolio.TestRiskManager.test_exposure_cap_blocks_buy) ... ok
+test_high_risk_blocked (tests.test_ai_risk_portfolio.TestRiskManager.test_high_risk_blocked) ... ok
+test_hold_always_allowed (tests.test_ai_risk_portfolio.TestRiskManager.test_hold_always_allowed) ... ok
+test_low_confidence_blocked (tests.test_ai_risk_portfolio.TestRiskManager.test_low_confidence_blocked) ... ok
+test_plan_sizing_respects_max_position_cap (tests.test_ai_risk_portfolio.TestRiskManager.test_plan_sizing_respects_max_position_cap) ... ok
+test_sell_plan_exits_full_position (tests.test_ai_risk_portfolio.TestRiskManager.test_sell_plan_exits_full_position) ... ok
+test_sell_without_position_blocked (tests.test_ai_risk_portfolio.TestRiskManager.test_sell_without_position_blocked) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.001s
+
+OK
+TestRiskManager: 9 run, 0 failed, 0 errors
+
+--- Running TestPaperPortfolio ---
+test_buy_reduces_cash_and_charges_fee (tests.test_ai_risk_portfolio.TestPaperPortfolio.test_buy_reduces_cash_and_charges_fee) ... ok
+test_buy_scales_down_when_cash_short (tests.test_ai_risk_portfolio.TestPaperPortfolio.test_buy_scales_down_when_cash_short) ... ok
+test_cannot_oversell_or_go_negative_cash (tests.test_ai_risk_portfolio.TestPaperPortfolio.test_cannot_oversell_or_go_negative_cash) ... ok
+test_fractional_shares_supported (tests.test_ai_risk_portfolio.TestPaperPortfolio.test_fractional_shares_supported) ... ok
+test_hold_does_nothing (tests.test_ai_risk_portfolio.TestPaperPortfolio.test_hold_does_nothing) ... ok
+test_sell_creates_round_trip_record (tests.test_ai_risk_portfolio.TestPaperPortfolio.test_sell_creates_round_trip_record) ... ok
+test_summary_separates_realized_and_unrealized (tests.test_ai_risk_portfolio.TestPaperPortfolio.test_summary_separates_realized_and_unrealized) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.001s
+
+OK
+TestPaperPortfolio: 7 run, 0 failed, 0 errors
+
+--- Running TestSecurityAudit ---
+test_gitignore_protects_env_and_secrets (tests.test_ai_risk_portfolio.TestSecurityAudit.test_gitignore_protects_env_and_secrets) ... ok
+test_no_hardcoded_credentials_in_python_files (tests.test_ai_risk_portfolio.TestSecurityAudit.test_no_hardcoded_credentials_in_python_files) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.023s
+
+OK
+TestSecurityAudit: 2 run, 0 failed, 0 errors
+
+--- Running TestExecutionModel ---
+test_costs_are_charged (tests.test_backtest.TestExecutionModel.test_costs_are_charged)
+Zero trades -> final value equals starting cash exactly. ... ok
+test_no_lookahead_entry_after_signal (tests.test_backtest.TestExecutionModel.test_no_lookahead_entry_after_signal)
+Entry fill must occur AFTER the signal bar (next bar open). ... ok
+test_stop_loss_triggers_on_crash (tests.test_backtest.TestExecutionModel.test_stop_loss_triggers_on_crash)
+A violent crash after entry MUST exit via STOP. ... ok
+test_take_profit_triggers (tests.test_backtest.TestExecutionModel.test_take_profit_triggers) ... ok
+test_trade_is_round_trip (tests.test_backtest.TestExecutionModel.test_trade_is_round_trip) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.576s
+
+OK
+TestExecutionModel: 5 run, 0 failed, 0 errors
+
+--- Running TestTradeAccounting ---
+test_alpha_is_strategy_minus_benchmark (tests.test_backtest.TestTradeAccounting.test_alpha_is_strategy_minus_benchmark) ... ok
+test_benchmark_buy_hold_return (tests.test_backtest.TestTradeAccounting.test_benchmark_buy_hold_return) ... ok
+test_drawdown_known_value (tests.test_backtest.TestTradeAccounting.test_drawdown_known_value) ... ok
+test_max_drawdown_matches_equity (tests.test_backtest.TestTradeAccounting.test_max_drawdown_matches_equity) ... ok
+test_metrics_na_when_no_trades (tests.test_backtest.TestTradeAccounting.test_metrics_na_when_no_trades) ... ok
+test_open_position_marked_to_market (tests.test_backtest.TestTradeAccounting.test_open_position_marked_to_market) ... ok
+test_profit_factor_none_when_no_losses (tests.test_backtest.TestTradeAccounting.test_profit_factor_none_when_no_losses) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.579s
+
+OK
+TestTradeAccounting: 7 run, 0 failed, 0 errors
+
+--- Running TestStrategiesProducePlans ---
+test_all_strategies_emit_valid_action_lists (tests.test_backtest.TestStrategiesProducePlans.test_all_strategies_emit_valid_action_lists) ... ok
+test_risk_managed_blocks_more_than_plain_ai (tests.test_backtest.TestStrategiesProducePlans.test_risk_managed_blocks_more_than_plain_ai) ... ok
+test_strategies_are_stateful_no_consecutive_buys (tests.test_backtest.TestStrategiesProducePlans.test_strategies_are_stateful_no_consecutive_buys)
+BUY never repeats while a position would already be open. ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.986s
+
+OK
+TestStrategiesProducePlans: 3 run, 0 failed, 0 errors
+
+--- Running TestWalkForward ---
+test_split_sizes_and_no_overlap (tests.test_backtest.TestWalkForward.test_split_sizes_and_no_overlap) ... ok
+test_walk_forward_runs_all_strategies (tests.test_backtest.TestWalkForward.test_walk_forward_runs_all_strategies) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 1.782s
+
+OK
+TestWalkForward: 2 run, 0 failed, 0 errors
+
+==========================================
+GRAND TOTAL TESTS: 68
+GRAND TOTAL FAILURES: 0
+GRAND TOTAL ERRORS: 0
+ALL TESTS PASSED: True
+==========================================
+
+=== STRATEGY ARENA: OUT-OF-SAMPLE PERFORMANCE (TEST SEGMENT: 2024-04-05 → 2024-07-12) ===
+Strategy                  | Return %   | Win Rate   | Profit Factor   | Sharpe   | Max DD %   | Trades   | Alpha %   
+--------------------------------------------------------------------------------------------------------------
+SMA + RSI                 | +0.21%     | 100.0%     | N/A             | 2.88     | 0.03%      | 1        | -19.03%   
+Trend + Momentum          | +0.42%     | 66.7%      | 7.83            | 2.79     | 0.12%      | 3        | -18.82%   
+Multi-Indicator Score     | +0.00%     | N/A        | N/A             | N/A      | 0.0%       | 0        | -19.24%   
+AI-Policy (emulated)      | +0.00%     | N/A        | N/A             | N/A      | 0.0%       | 0        | -19.24%   
+AI + Risk Manager         | +0.00%     | N/A        | N/A             | N/A      | 0.0%       | 0        | -19.24%   
+Buy & Hold Benchmark      | +19.24%     | N/A        | N/A             | 3.6      | 2.63%      | 1        | 0.00%     
+==============================================================================================================
