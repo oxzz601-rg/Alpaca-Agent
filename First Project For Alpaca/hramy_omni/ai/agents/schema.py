@@ -45,6 +45,20 @@ VALID_REGIMES = {
 VALID_VERDICTS = {"PROCEED", "BLOCK"}
 VALID_SOURCES = {"groq", "local_policy", "fallback"}
 
+# Frontend pipeline visualizer stage names (Part 10). Match exactly.
+TRACE_MARKET_ANALYST = "MARKET_ANALYST"
+TRACE_OPPORTUNITY_SCANNER = "OPPORTUNITY_SCANNER"
+TRACE_OPTIONS_STRATEGIST = "OPTIONS_STRATEGIST"
+TRACE_RISK_MANAGER = "RISK_MANAGER"
+TRACE_EXECUTION = "EXECUTION"
+TRACE_PORTFOLIO_MONITOR = "PORTFOLIO_MONITOR"
+
+AI_TRACE_STAGES = (
+    TRACE_MARKET_ANALYST,
+    TRACE_OPPORTUNITY_SCANNER,
+    TRACE_OPTIONS_STRATEGIST,
+)
+
 # Sane numeric bounds - the AI can NEVER propose outside these,
 # no matter what the LLM says. This is what "clamping" means here.
 DTE_MIN, DTE_MAX = 1, 60

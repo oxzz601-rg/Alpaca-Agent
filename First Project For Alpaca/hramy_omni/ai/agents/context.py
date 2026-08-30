@@ -45,3 +45,46 @@ def with_mock_iv_rank(market: dict) -> dict:
         market = dict(market)
         market["iv_rank"] = MOCK_IV_RANK
     return market
+
+
+def composite_score(market: dict) -> float:
+    """Read composite from either score.composite or composite_score."""
+    if not isinstance(market, dict):
+        return 0.0
+    score = market.get("score")
+    if isinstance(score, dict) and "composite" in score:
+        try:
+            return float(score["composite"])
+        except (TypeError, ValueError):
+            return 0.0
+    try:
+        return float(market.get("composite_score", 0.0) or 0.0)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def has_shares(account: dict | None) -> bool:
+    """True if the account already holds underlying shares (needed for covered calls)."""
+    account = account or {}
+    try:
+        if float(account.get("open_positions", 0) or 0) > 0:
+            return True
+    except (TypeError, ValueError):
+        pass
+    try:
+        if float(account.get("shares", 0) or 0) > 0:
+            return True
+    except (TypeError, ValueError):
+        pass
+    positions = account.get("positions") or []
+    if isinstance(positions, list):
+        for pos in positions:
+            if not isinstance(pos, dict):
+                continue
+            qty = pos.get("qty", pos.get("quantity", 0))
+            try:
+                if float(qty or 0) > 0:
+                    return True
+            except (TypeError, ValueError):
+                continue
+    return False

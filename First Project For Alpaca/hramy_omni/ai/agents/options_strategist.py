@@ -17,8 +17,13 @@ Allowed structures ONLY (no naked shorts, no condors, no strangles):
 import sys
 import os
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_here = os.path.dirname(os.path.abspath(__file__))
+_ai = os.path.dirname(_here)
+_root = os.path.dirname(_ai)
+sys.path.insert(0, _root)
+sys.path.insert(0, _ai)
 
+from agents.context import has_shares as account_has_shares
 from agents.schema import validate_trade_decision
 
 IV_HIGH_THRESHOLD = 50.0
@@ -142,7 +147,7 @@ def select_strategy(market: dict, account: dict | None = None, iv_rank: float | 
     regime = str(market.get("regime", "SIDEWAYS")).upper()
     iv_rank = float(iv_rank) if iv_rank is not None else float(market.get("iv_rank", 62.0))
     composite = float(market.get("score", {}).get("composite", 0.0))
-    has_shares = float(account.get("open_positions", 0)) > 0
+    has_shares = account_has_shares(account)
 
     picked = matrix_lookup(regime, iv_rank, has_shares=has_shares)
     strategy_type = picked["strategy_type"]

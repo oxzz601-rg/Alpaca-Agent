@@ -11,14 +11,27 @@ def log(msg):
     OUT.write(str(msg) + "\n")
     OUT.flush()
 
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "ai"))
+
 from tests.test_analysis import TestIndicators, TestSignals, TestRegime
 from tests.test_ai_risk_portfolio import TestAIValidation, TestRiskManager, TestPaperPortfolio, TestSecurityAudit
 from tests.test_backtest import TestExecutionModel, TestTradeAccounting, TestStrategiesProducePlans, TestWalkForward
+from agents.tests.test_agents import (
+    AttributionTests,
+    DevilsAdvocateTests,
+    FixtureTests,
+    IvBucketTests,
+    MatrixTests,
+    OrchestratorTests,
+    SchemaTests,
+)
 
 test_classes = [
     TestIndicators, TestSignals, TestRegime,
     TestAIValidation, TestRiskManager, TestPaperPortfolio, TestSecurityAudit,
-    TestExecutionModel, TestTradeAccounting, TestStrategiesProducePlans, TestWalkForward
+    TestExecutionModel, TestTradeAccounting, TestStrategiesProducePlans, TestWalkForward,
+    IvBucketTests, MatrixTests, FixtureTests, SchemaTests,
+    DevilsAdvocateTests, OrchestratorTests, AttributionTests,
 ]
 
 total_ran = 0

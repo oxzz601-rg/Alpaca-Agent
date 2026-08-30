@@ -14,15 +14,20 @@ import sys
 import os
 import json
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_here = os.path.dirname(os.path.abspath(__file__))
+_ai = os.path.dirname(_here)            # hramy_omni/ai  (so `agents.*` imports work)
+_root = os.path.dirname(_ai)            # hramy_omni     (so `data.*` / `analysis.*` work)
+sys.path.insert(0, _root)
+sys.path.insert(0, _ai)
 
 from data.alpaca_data import generate_demo_data
 from analysis.indicators import calculate_indicators, latest_snapshot
 from analysis.signals import generate_market_signals, compute_signal_scores
 from analysis.regime import detect_regime
 
-from agents.options_strategist import select_strategy
 from agents.context import DEFAULT_ACCOUNT
+from agents.orchestrator import decide
+from agents.options_strategist import select_strategy
 
 
 def build_market_context(symbol: str = "NVDA", days: int = 300) -> dict:
@@ -49,6 +54,11 @@ if __name__ == "__main__":
     }, indent=2, default=str))
     print("composite score:", m["score"]["composite"])
 
-    print("\n=== Strategist decision (deterministic matrix, no LLM) ===")
-    decision = select_strategy(m, DEFAULT_ACCOUNT, m["iv_rank"])
-    print(json.dumps(decision, indent=2))
+    print("\n=== Strategist only (deterministic matrix, no LLM) ===")
+    print(json.dumps(select_strategy(m, DEFAULT_ACCOUNT, m["iv_rank"]), indent=2))
+
+    print("\n=== Full orchestrator.decide() (matrix, no LLM) ===")
+    print(json.dumps(decide(m, DEFAULT_ACCOUNT, m["iv_rank"], use_llm=False), indent=2))
+
+    print("\n=== Full orchestrator.decide() (optional Groq refine) ===")
+    print(json.dumps(decide(m, DEFAULT_ACCOUNT, m["iv_rank"], use_llm=True), indent=2))
