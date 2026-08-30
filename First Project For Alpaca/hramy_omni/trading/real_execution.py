@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 from typing import Any
 
 try:
@@ -79,15 +78,58 @@ class AlpacaBroker:
     def account_snapshot(self) -> dict[str, Any]:
         if self.client is None:
             raise RuntimeError("Alpaca paper-trading client is not configured.")
+        account = self.client.get_account()
         return normalize_account_snapshot({
-            "account_id": self.account_id,
-            "cash": float(self.client.get_account().cash),
-            "buying_power": float(self.client.get_account().buying_power),
-            "equity": float(self.client.get_account().equity),
-            "portfolio_value": float(self.client.get_account().portfolio_value),
-            "status": getattr(self.client.get_account(), "status", "ACTIVE"),
-            "pl": float(getattr(self.client.get_account(), "pl", 0.0)),
+            "account_id": getattr(account, "account_id", self.account_id),
+            "cash": float(getattr(account, "cash", 0.0)),
+            "buying_power": float(getattr(account, "buying_power", 0.0)),
+            "equity": float(getattr(account, "equity", 0.0)),
+            "portfolio_value": float(getattr(account, "portfolio_value", 0.0)),
+            "status": getattr(account, "status", "ACTIVE"),
+            "pl": float(getattr(account, "pl", 0.0)),
         })
+
+    def options_eligible(self) -> bool:
+        if self.client is None:
+            raise RuntimeError("Alpaca paper-trading client is not configured.")
+        account = self.client.get_account()
+        option_level = getattr(account, "option_level", 0)
+        try:
+            option_level = int(option_level)
+        except Exception:
+            option_level = 0
+        return option_level >= 3
+
+    def get_clock(self) -> dict[str, Any]:
+        if self.client is None:
+            raise RuntimeError("Alpaca paper-trading client is not configured.")
+        clock = self.client.get_clock()
+        return {
+            "timestamp": getattr(clock, "timestamp", None),
+            "is_open": bool(getattr(clock, "is_open", False)),
+            "next_open": getattr(clock, "next_open", None),
+            "next_close": getattr(clock, "next_close", None),
+        }
+
+    def get_positions(self) -> list[dict[str, Any]]:
+        if self.client is None:
+            raise RuntimeError("Alpaca paper-trading client is not configured.")
+        return [
+            {
+                "symbol": getattr(p, "symbol", ""),
+                "qty": getattr(p, "qty", 0),
+                "market_value": getattr(p, "market_value", 0.0),
+                "unrealized_pl": getattr(p, "unrealized_pl", 0.0),
+            }
+            for p in self.client.get_all_positions()
+        ]
+
+    def get_option_chain(self, symbol: str, expiration_date: str | None = None, strike: float | None = None):
+        if self.client is None:
+            raise RuntimeError("Alpaca paper-trading client is not configured.")
+        if hasattr(self.client, "get_option_chain"):
+            return self.client.get_option_chain(symbol=symbol, expiration_date=expiration_date, strike=strike)
+        return {"symbol": symbol, "expiration_date": expiration_date, "strike": strike, "contracts": []}
 
     def submit_market_order(self, symbol: str, side: str, qty: float = 1.0, order_type: str = "stock") -> dict[str, Any]:
         if self.client is None:
@@ -108,5 +150,19 @@ class AlpacaBroker:
     def submit_option_order(self, symbol: str, side: str, qty: float = 1.0, option_symbol: str | None = None) -> dict[str, Any]:
         if self.client is None:
             raise RuntimeError("Real Alpaca execution is not available because credentials are missing.")
+        if not self.options_eligible():
+            raise RuntimeError("This Alpaca paper account does not have options trading enabled (need level 3).")
+
         target_symbol = option_symbol or symbol
-        return self.submit_market_order(target_symbol, side, qty=qty, order_type="option")
+        if MarketOrderRequest is None or OrderSide is None or TimeInForce is None:
+            raise RuntimeError("Alpaca trading SDK is unavailable in this environment.")
+
+        order_side = OrderSide.SELL if str(side).upper() in {"SELL", "SHORT", "WRITE"} else OrderSide.BUY
+        request = MarketOrderRequest(
+            symbol=target_symbol,
+            qty=qty,
+            side=order_side,
+            time_in_force=TimeInForce.DAY,
+            order_class=OrderClass.MARKET,
+        )
+        return self.client.submit_order(order_data=request)
