@@ -6,3 +6,50 @@
 __pycache__/
 *.py[cod]
 *$py.class
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Environment / Secrets
+.env
+.env.local
+.env.*.local
+*.env
+!.env.example
+.secrets.toml
+.streamlit/secrets.toml
+
+# Legacy root-level duplicates (contain or duplicate secrets/source)
+info.txt
+hram
+hramy_omni.py
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Data / Cache
+*.json
+!requirements*.txt
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/

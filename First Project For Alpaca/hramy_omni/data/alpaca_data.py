@@ -27,6 +27,18 @@ from alpaca.data.timeframe import TimeFrame
 from config import ALPACA_API_KEY, ALPACA_SECRET_KEY
 
 
+def get_market_data_cli(symbol: str = "AAPL", days: int = DEFAULT_LOOKBACK_DAYS) -> dict:
+    """CLI-friendly snapshot of market data for local or MCP-style usage."""
+    df = get_historical_data(symbol=symbol, days=days)
+    return {
+        "symbol": symbol.upper(),
+        "rows": int(len(df)),
+        "latest_close": float(df["close"].iloc[-1]),
+        "start": df.index[0].isoformat() if len(df) else None,
+        "end": df.index[-1].isoformat() if len(df) else None,
+    }
+
+
 # ============================================================
 # Configuration
 # ============================================================

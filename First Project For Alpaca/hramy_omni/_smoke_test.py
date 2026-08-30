@@ -102,6 +102,9 @@ with open(env_example_path, "w", encoding="utf-8") as env_f:
 # 1. Market Data (Alpaca IEX Data Feed)
 ALPACA_API_KEY=your_alpaca_api_key_here
 ALPACA_SECRET_KEY=your_alpaca_secret_key_here
+ALPACA_PAPER_API_KEY=your_paper_api_key_here
+ALPACA_PAPER_SECRET_KEY=your_paper_secret_key_here
+ALPACA_PAPER_ACCOUNT_ID=your_paper_account_id_here
 
 # 2. AI Decision Engine (Groq Cloud API)
 GROQ_API_KEY=your_groq_api_key_here

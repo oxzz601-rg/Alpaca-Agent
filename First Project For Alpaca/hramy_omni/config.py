@@ -39,6 +39,10 @@ def _env_float(name: str, default: float) -> float:
 # ------------------------------------------------------------
 ALPACA_API_KEY = os.getenv("ALPACA_API_KEY", "")
 ALPACA_SECRET_KEY = os.getenv("ALPACA_SECRET_KEY", "")
+ALPACA_PAPER_API_KEY = os.getenv("ALPACA_PAPER_API_KEY", ALPACA_API_KEY)
+ALPACA_PAPER_SECRET_KEY = os.getenv("ALPACA_PAPER_SECRET_KEY", ALPACA_SECRET_KEY)
+ALPACA_PAPER_ACCOUNT_ID = os.getenv("ALPACA_PAPER_ACCOUNT_ID", "")
+ALPACA_ACCOUNT_ID = ALPACA_PAPER_ACCOUNT_ID or os.getenv("ALPACA_ACCOUNT_ID", "")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 
 # ------------------------------------------------------------
