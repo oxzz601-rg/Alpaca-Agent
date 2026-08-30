@@ -1,0 +1,49 @@
+{
+  "symbol": "NVDA",
+  "price": 182.30,
+  "sma20": 178.0,
+  "sma50": 170.0,
+  "rsi": 61.0,
+  "adx": 34.0,
+  "atr_pct": 2.1,
+  "volatility": 28.0,
+  "volume_ratio": 1.4,
+  "support20": 175.0,
+  "resistance20": 190.0,
+  "vwap20": 180.0,
+  "macd_hist": 0.35,
+  "bb_percent_b": 0.72,
+  "trend": "BULLISH",
+  "rsi_signal": "NEUTRAL",
+  "momentum_signal": "POSITIVE",
+  "volume_signal": "HIGH",
+  "volatility_label": "MODERATE",
+  "adx_label": "STRONG",
+  "signals": [
+    "Price is above SMA20 and SMA20 is above SMA50.",
+    "MACD histogram is positive (bullish crossover state).",
+    "RSI is in a neutral range.",
+    "Trading volume is significantly above average."
+  ],
+  "regime": "BULL_TREND",
+  "trend_strength": "STRONG",
+  "iv_rank": 41.0,
+  "score": {
+    "composite": 58.0,
+    "components": {
+      "trend": 1.0, "momentum": 0.4, "rsi": 0.2, "macd": 0.3,
+      "volume": 0.4, "volatility": 0.0, "adx": 0.5, "regime": 1.0
+    },
+    "notes": {},
+    "weights": {
+      "trend": 0.20, "momentum": 0.15, "rsi": 0.15, "macd": 0.15,
+      "volume": 0.10, "volatility": 0.10, "adx": 0.08, "regime": 0.07
+    }
+  },
+  "account": {
+    "equity": 100000.0,
+    "cash": 100000.0,
+    "open_positions": 0,
+    "buying_power": 100000.0
+  }
+}
