@@ -16,6 +16,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "ai"
 from tests.test_analysis import TestIndicators, TestSignals, TestRegime
 from tests.test_ai_risk_portfolio import TestAIValidation, TestRiskManager, TestPaperPortfolio, TestSecurityAudit
 from tests.test_backtest import TestExecutionModel, TestTradeAccounting, TestStrategiesProducePlans, TestWalkForward
+from tests.test_execution_ai import ExecutionAiTests, IvRankTests, OccSymbolTests
 from agents.tests.test_agents import (
     AttributionTests,
     DevilsAdvocateTests,
@@ -32,6 +33,7 @@ test_classes = [
     TestExecutionModel, TestTradeAccounting, TestStrategiesProducePlans, TestWalkForward,
     IvBucketTests, MatrixTests, FixtureTests, SchemaTests,
     DevilsAdvocateTests, OrchestratorTests, AttributionTests,
+    OccSymbolTests, IvRankTests, ExecutionAiTests,
 ]
 
 total_ran = 0

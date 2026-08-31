@@ -26,6 +26,8 @@ from alpaca.data.timeframe import TimeFrame
 
 from config import ALPACA_API_KEY, ALPACA_SECRET_KEY
 
+DEFAULT_LOOKBACK_DAYS = 100
+
 
 def get_market_data_cli(symbol: str = "AAPL", days: int = DEFAULT_LOOKBACK_DAYS) -> dict:
     """CLI-friendly snapshot of market data for local or MCP-style usage."""
@@ -42,8 +44,6 @@ def get_market_data_cli(symbol: str = "AAPL", days: int = DEFAULT_LOOKBACK_DAYS)
 # ============================================================
 # Configuration
 # ============================================================
-
-DEFAULT_LOOKBACK_DAYS = 100
 
 # IEX is available for accounts that don't have recent SIP access.
 DATA_FEED = DataFeed.IEX
