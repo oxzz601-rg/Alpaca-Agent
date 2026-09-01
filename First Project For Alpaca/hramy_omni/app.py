@@ -22,7 +22,11 @@ from datetime import datetime
 import pandas as pd
 import streamlit as st
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+AI_DIR = os.path.join(ROOT_DIR, "ai")
+for path in (ROOT_DIR, AI_DIR):
+    if path not in sys.path:
+        sys.path.insert(0, path)
 
 from config import (
     AI_CACHE_TTL,
@@ -36,22 +40,19 @@ from config import (
     RISK_PER_TRADE,
     STARTING_CASH,
 )
+from ai.groq_engine import is_configured as groq_is_configured
 from analysis.indicators import calculate_indicators, latest_snapshot
 from analysis.signals import compute_signal_scores, generate_market_signals
 from analysis.regime import detect_regime
-from ai.groq_engine import (
-    get_ai_decision,
-    get_last_failure,
-    is_configured as groq_is_configured,
-    local_policy_decision,
-)
+from agents.orchestrator import decide as ai_decide
 from ai.chatbot import answer_question, parse_command
 from backtest.engine import backtest as default_backtest, benchmark_buy_hold
 from backtest.strategies import STRATEGY_REGISTRY
 from backtest.walkforward import evaluate_walk_forward
 from data.alpaca_data import get_historical_data
 from portfolio.simulator import PaperPortfolio
-from risk.risk_manager import default_manager
+from trading.option_chain import OptionChainResolver
+from trading.risk import OptionRiskGate
 from ui import dashboard as dash
 from ui.charts import (
     drawdown_chart,
@@ -118,7 +119,7 @@ with st.sidebar:
     symbol = st.text_input("Symbol", value=DEFAULT_SYMBOL).upper().strip() or DEFAULT_SYMBOL
     lookback = st.slider("Lookback (trading days)", 160, 500, LOOKBACK_DAYS, step=20)
 
-    if st.button("🔄 Refresh Analysis", width="stretch"):
+    if st.button("🔄 Refresh Analysis", use_container_width=True):
         st.cache_data.clear()
         st.rerun()
 
@@ -202,48 +203,43 @@ account_state = {
     "exposure_percent": portfolio_summary["exposure_percent"],
 }
 
-if groq_is_configured():
-    with st.spinner("Consulting Groq AI engine…"):
-        ai_json = load_ai(
-            symbol,
-            json.dumps(market, default=str),
-            json.dumps(account_state),
-        )
-        ai = json.loads(ai_json)
-    if ai.get("failure_type"):
-        failure_type = ai.get("failure_type")
-        ai = local_policy_decision(market, account_state)
-        ai["ai_failure_type"] = failure_type
-        ai["reason"] = (
-            f"Local quantitative policy active after Groq {failure_type.replace('_', ' ')}. "
-            f"{ai['reason']}"
-        )
-else:
-    failure = get_last_failure()
-    ai = local_policy_decision(market, account_state)
-    ai["reason"] = (
-        f"{ai['reason']} (AI offline: "
-        f"{failure.get('type') or 'GROQ_API_KEY not configured'})"
-    )
+use_llm = bool(os.getenv("GROQ_API_KEY"))
+ai = ai_decide(market, account_state, market.get("iv_rank"), use_llm=use_llm)
 
 # ------------------------------------------------------------
-# Risk manager gate + execution plan
+# Real backend risk gate + option plan
 # ------------------------------------------------------------
 
-allowed, status, reason = default_manager.evaluate(
-    ai.get("decision", "HOLD"), ai, snapshot["price"], account_state, market
-)
-plan = default_manager.build_execution_plan(
-    ai.get("decision", "HOLD"), ai, snapshot["price"], account_state, market
+resolver = OptionChainResolver(live=False)
+plan = resolver.resolve_contract(
+    symbol=symbol,
+    stock_price=float(snapshot.get("price") or 0.0),
+    target_delta=float(ai.get("target_delta") or 0.25),
+    target_dte=int(ai.get("target_dte") or 21),
+    side="put" if str(ai.get("strategy_type") or "").upper() in {"CASH_SECURED_PUT", "BEAR_PUT_SPREAD", "LONG_PUT"} else "call",
+    quantity=int(ai.get("contracts") or 1),
+    strategy=str(ai.get("strategy_type") or "NONE").upper(),
 )
 
-final_decision = ai.get("decision", "HOLD") if allowed else "HOLD"
-risk_status = {"allowed": allowed, "status": status, "reason": reason}
+risk_gate = OptionRiskGate()
+allowed, reason = risk_gate.evaluate(plan, account_state, positions=[])
+risk_status = {
+    "allowed": bool(allowed),
+    "status": "PASSED" if allowed else "BLOCKED",
+    "reason": reason,
+}
+
+final_decision = str(ai.get("action") or "HOLD").upper() if allowed else "HOLD"
+if final_decision == "HOLD":
+    ai["action"] = "HOLD"
+    ai["strategy_type"] = "NONE"
+    ai["contracts"] = 0
 
 st.session_state.decision_history.append({
     "time": datetime.now().strftime("%H:%M:%S"),
     "decision": final_decision,
     "confidence": ai.get("confidence", 0),
+    "strategy_type": ai.get("strategy_type", "NONE"),
 })
 st.session_state.decision_history = st.session_state.decision_history[-20:]
 
@@ -257,7 +253,7 @@ if active_section == "Overview":
     dash.render_market_terminal(market, regime_info)
     overview_chart, overview_signals = st.columns([1.8, 1], gap="large")
     with overview_chart:
-        st.plotly_chart(price_chart(data, symbol), width="stretch")
+        st.plotly_chart(price_chart(data, symbol), use_container_width=True)
     with overview_signals:
         dash.render_signal_matrix(market, score_data)
     overview_portfolio, overview_timeline = st.columns([1.25, 1], gap="large")
@@ -274,11 +270,13 @@ if active_section == "AI Decision":
     with decision_col:
         dash.render_ai_decision(ai, plan, symbol)
         if ai.get("source") == "local_policy":
-            st.caption("AI status: quantitative policy active · decision source: local policy")
-        elif not groq_is_configured():
-            st.caption("AI status: Groq offline · decision source: local policy")
+            st.caption("AI status: deterministic policy active · decision source: local policy")
+        elif ai.get("source") == "fallback":
+            st.caption("AI status: safe fallback active · decision source: schema fallback")
+        elif use_llm:
+            st.caption("AI status: Groq online · decision source: orchestrator refinement")
         else:
-            st.caption("AI status: Groq online · decision source: Groq model")
+            st.caption("AI status: deterministic agent path · decision source: local policy")
     with risk_col:
         caps = {
             "max_exposure": MAX_PORTFOLIO_EXPOSURE * 100,
@@ -296,7 +294,8 @@ if st.session_state.active_section == "Paper Execution":
     st.caption("All activity here is simulated. The risk manager must approve every trade.")
     execute_clicked = st.button(
         "⚡ Execute AI Decision (Simulated)",
-        width="stretch", type="primary",
+        type="primary",
+        use_container_width=True,
     )
     if execute_clicked:
         if final_decision == "HOLD":
@@ -414,7 +413,7 @@ if wf:
                 e.get("equity_curve"),
                 wf["benchmarks"]["test"].get("equity_curve"),
                 title="OOS Equity · AI+Risk Manager vs Buy & Hold",
-            ), width="stretch")
+            ), use_container_width=True)
         else:
             st.info("Not enough out-of-sample bars — increase the lookback slider.")
 
@@ -428,7 +427,7 @@ if wf:
                 c_val.get("equity_curve"),
                 wf["benchmarks"]["validation"].get("equity_curve"),
                 title="Validation Equity vs Buy & Hold",
-            ), width="stretch")
+            ), use_container_width=True)
 
     with tab_is:
         st.caption(f"Period: **{labels.get('train', 'N/A')}** · "
@@ -440,7 +439,7 @@ if wf:
                 c_train.get("equity_curve"),
                 wf["benchmarks"]["train"].get("equity_curve"),
                 title="In-Sample Equity vs Buy & Hold",
-            ), width="stretch")
+            ), use_container_width=True)
 
     # ---- Parameter selection transparency ----
     sel = wf.get("parameter_selection", {})
@@ -513,15 +512,15 @@ if wf:
     with col_eq:
         st.plotly_chart(equity_curve_chart(
             ref_bt.get("equity_curve"), ref_bench.get("equity_curve"),
-        ), width="stretch")
+        ), use_container_width=True)
     with col_dd:
-        st.plotly_chart(drawdown_chart(ref_bt.get("equity_curve")), width="stretch")
+        st.plotly_chart(drawdown_chart(ref_bt.get("equity_curve")), use_container_width=True)
 
     col_pnl, col_regime = st.columns([1.2, 1.4], gap="medium")
     with col_pnl:
-        st.plotly_chart(trade_pnl_chart(ref_bt.get("trade_list")), width="stretch")
+        st.plotly_chart(trade_pnl_chart(ref_bt.get("trade_list")), use_container_width=True)
     with col_regime:
-        st.plotly_chart(regime_timeline_chart(data), width="stretch")
+        st.plotly_chart(regime_timeline_chart(data), use_container_width=True)
 
     if ref_bt.get("trade_list"):
         dash.render_trade_history(ref_bt["trade_list"])
@@ -540,7 +539,8 @@ exec_col, msg_col = st.columns([1, 3])
 with exec_col:
     execute_clicked = st.button(
         "⚡ Execute AI Decision (Simulated)",
-        width="stretch", type="primary",
+        type="primary",
+        use_container_width=True,
     )
 if execute_clicked:
     if final_decision == "HOLD":

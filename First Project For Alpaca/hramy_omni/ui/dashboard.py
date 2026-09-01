@@ -444,38 +444,48 @@ def pd_escape(text: str) -> str:
 
 def render_ai_decision(ai: dict, plan=None, symbol: str = "", container=None):
     """
-    The visual centerpiece: large decision + confidence bar +
-    risk-approved execution plan (entry/size/stop/target/R:R).
-    `plan` is a risk_manager.ExecutionPlan.
+    Visual card compatible with both the legacy BUY/SELL/HOLD schema and the
+    current TradeDecision schema used by agents.orchestrator.decide().
     """
     target = container or st
 
-    decision = str(ai.get("decision", "HOLD")).upper()
+    action = str(ai.get("action") or ai.get("decision") or "HOLD").upper()
+    decision = action
     confidence = float(ai.get("confidence", 0.0))
     risk = ai.get("risk", "HIGH")
-    regime = ai.get("market_regime", "—")
+    regime = ai.get("regime") or ai.get("market_regime", "—")
     horizon = ai.get("time_horizon", "SWING")
     source = ai.get("source", "groq")
     model = ai.get("model", "")
+    strategy = ai.get("strategy_type") or ai.get("decision_type") or "NONE"
+    iv_rank = ai.get("iv_rank")
 
-    cls = {"BUY": "buy", "SELL": "sell"}.get(decision, "hold")
+    cls = {"OPEN": "buy", "CLOSE": "sell"}.get(action, "hold")
     conf_pct = int(round(confidence * 100))
 
     sub_items = [
+        f"<span>Action <b>{decision}</b></span>",
         f"<span>Confidence <b>{conf_pct}%</b></span>",
         f"<span>Risk <b>{risk}</b></span>",
         f"<span>Regime <b>{regime}</b></span>",
-        f"<span>Horizon <b>{horizon}</b></span>",
+        f"<span>Strategy <b>{strategy}</b></span>",
     ]
+    if iv_rank is not None:
+        sub_items.append(f"<span>IV Rank <b>{float(iv_rank):.1f}</b></span>")
+    if horizon and horizon != "SWING":
+        sub_items.append(f"<span>Horizon <b>{horizon}</b></span>")
 
     plan_cells = ""
     if plan is not None:
         p = plan.to_dict() if hasattr(plan, "to_dict") else dict(plan)
-        entry = p.get("entry_price") or 0.0
+        # Support both the old risk-manager plan and the execution-loop option plan.
+        entry = p.get("entry_price") or p.get("strike") or 0.0
         stop = p.get("stop_price") or 0.0
         tgt = p.get("target_price") or 0.0
         qty = p.get("quantity") or 0.0
         size = p.get("position_size_percent") or 0.0
+        option_symbol = p.get("option_symbol") or "—"
+        expiry = p.get("expiry_date") or "—"
 
         rr = ""
         if stop and tgt and entry and abs(entry - stop) > 1e-9:
@@ -483,10 +493,11 @@ def render_ai_decision(ai: dict, plan=None, symbol: str = "", container=None):
             rr = f"{rr_val:.1f} : 1"
 
         cells = [
-            ("Entry", f"${entry:,.2f}" if entry else "—"),
-            ("Position Size", f"{size:.1f}% ({qty:.2f} sh)" if qty else "—"),
-            ("Stop Loss", f"${stop:,.2f}" if stop else "—"),
-            ("Take Profit", f"${tgt:,.2f}" if tgt else "—"),
+            ("Strategy", str(strategy)),
+            ("Option", str(option_symbol)),
+            ("Expiry", str(expiry)),
+            ("Qty", f"{qty:.2f}" if qty else "—"),
+            ("Cash / Collat.", f"${p.get('required_cash', 0):,.2f}" if p.get('required_cash') else "—"),
             ("Risk / Reward", rr or "—"),
         ]
         plan_cells = "".join(
@@ -500,7 +511,7 @@ def render_ai_decision(ai: dict, plan=None, symbol: str = "", container=None):
     src_text = (
         f"GROQ · {model}" if source == "groq"
         else ("LOCAL POLICY · AI OFFLINE" if source == "local_policy"
-              else "FALLBACK · SAFE HOLD")
+              else ("FALLBACK · SAFE HOLD" if source == "fallback" else "AI · LIVE"))
     )
 
     html = f"""
@@ -621,10 +632,11 @@ def render_risk_panel(risk_status: dict, plan=None, account: dict | None = None,
     allowed = risk_status.get("allowed", False)
     reason = risk_status.get("reason", "")
 
+    status_label = str(risk_status.get("status") or ("PASSED" if allowed else "BLOCKED")).upper()
     banner = (
-        f'<div class="note" style="color:#3fb950;">✔ PASSED — {pd_escape(reason)}</div>'
+        f'<div class="note" style="color:#3fb950;">✔ {status_label} — {pd_escape(reason)}</div>'
         if allowed
-        else f'<div class="note" style="color:#f85149;">✖ BLOCKED — {pd_escape(reason)}</div>'
+        else f'<div class="note" style="color:#f85149;">✖ {status_label} — {pd_escape(reason)}</div>'
     )
 
     rows = []
@@ -794,7 +806,7 @@ def render_strategy_comparison(comparison_rows: list, container=None):
 
     df = pd.DataFrame(comparison_rows)
     target.markdown("##### ▶ STRATEGY ARENA — same data, same costs")
-    target.dataframe(df, width="stretch", height=260, hide_index=True)
+    target.dataframe(df, use_container_width=True, height=260, hide_index=True)
 
 
 # ============================================================
@@ -830,7 +842,7 @@ def render_trade_history(trades: list, container=None):
 
     df = pd.DataFrame(rows).sort_values("#")
     target.markdown("##### 📊 TRADE HISTORY — CLOSED ROUND TRIPS")
-    target.dataframe(df, width="stretch", height=min(280, 80 + 26 * len(df)))
+    target.dataframe(df, use_container_width=True, height=min(280, 80 + 26 * len(df)))
 
 
 # ============================================================
