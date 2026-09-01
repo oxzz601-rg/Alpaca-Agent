@@ -303,15 +303,17 @@ if st.session_state.active_section == "Paper Execution":
         elif not allowed:
             st.error(f"Risk Manager blocked execution: {reason}")
         else:
-            qty = plan.quantity if plan.quantity > 0 else None
+            qty = plan.get("quantity", 0) if plan.get("quantity", 0) > 0 else None
+            stop_price = plan.get("stop_price") if final_decision == "BUY" else None
+            target_price = plan.get("target_price") if final_decision == "BUY" else None
             st.session_state.last_exec_msg = st.session_state.portfolio.execute(
                 symbol,
-                plan.action,
+                final_decision,
                 snapshot["price"],
                 confidence=ai.get("confidence", 0.5),
                 quantity=qty,
-                stop_price=plan.stop_price if plan.action == "BUY" else None,
-                target_price=plan.target_price if plan.action == "BUY" else None,
+                stop_price=stop_price,
+                target_price=target_price,
                 ai_meta={"reason": (ai.get("reason") or "")[:120]},
             )
             st.rerun()
@@ -342,12 +344,14 @@ if st.session_state.active_section == "Assistant":
         elif command == "EXECUTE_DECISION" and not allowed:
             answer = f"Simulation blocked by the risk manager: {reason}"
         elif command == "EXECUTE_DECISION":
-            qty = plan.quantity if plan.quantity > 0 else None
+            qty = plan.get("quantity", 0) if plan.get("quantity", 0) > 0 else None
+            stop_price = plan.get("stop_price") if final_decision == "BUY" else None
+            target_price = plan.get("target_price") if final_decision == "BUY" else None
             answer = st.session_state.portfolio.execute(
-                symbol, plan.action, snapshot["price"],
+                symbol, final_decision, snapshot["price"],
                 confidence=ai.get("confidence", 0.5), quantity=qty,
-                stop_price=plan.stop_price if plan.action == "BUY" else None,
-                target_price=plan.target_price if plan.action == "BUY" else None,
+                stop_price=stop_price,
+                target_price=target_price,
                 ai_meta={"reason": (ai.get("reason") or "")[:120]},
             )
         else:
@@ -548,15 +552,15 @@ if execute_clicked:
     elif not allowed:
         st.error(f"Risk Manager blocked execution: {reason}")
     else:
-        qty = plan.quantity if plan.quantity > 0 else None
+        qty = plan.get("quantity", 0) if plan.get("quantity", 0) > 0 else None
         msg = st.session_state.portfolio.execute(
             symbol,
-            plan.action,
+            final_decision,
             snapshot["price"],
             confidence=ai.get("confidence", 0.5),
             quantity=qty,
-            stop_price=plan.stop_price if plan.action == "BUY" else None,
-            target_price=plan.target_price if plan.action == "BUY" else None,
+            stop_price=plan.get("stop_price") if final_decision == "BUY" else None,
+            target_price=plan.get("target_price") if final_decision == "BUY" else None,
             ai_meta={
                 "risk": ai.get("risk", ""),
                 "regime": ai.get("market_regime", ""),
@@ -622,16 +626,16 @@ with st.expander(
             elif not allowed:
                 result = {"answer": f"Simulation blocked by the risk manager: {reason}", "source": "local"}
             else:
-                qty = plan.quantity if plan.quantity > 0 else None
+                qty = plan.get("quantity", 0) if plan.get("quantity", 0) > 0 else None
                 result = {
                     "answer": st.session_state.portfolio.execute(
                         symbol,
-                        plan.action,
+                        final_decision,
                         snapshot["price"],
                         confidence=ai.get("confidence", 0.5),
                         quantity=qty,
-                        stop_price=plan.stop_price if plan.action == "BUY" else None,
-                        target_price=plan.target_price if plan.action == "BUY" else None,
+                        stop_price=plan.get("stop_price") if final_decision == "BUY" else None,
+                        target_price=plan.get("target_price") if final_decision == "BUY" else None,
                         ai_meta={"reason": (ai.get("reason") or "")[:120]},
                     ),
                     "source": "paper simulator",
