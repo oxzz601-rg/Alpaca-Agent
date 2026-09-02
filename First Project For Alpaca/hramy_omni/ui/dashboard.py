@@ -468,6 +468,31 @@ footer { visibility: hidden; }
     width: 100% !important; max-width: 100% !important; overflow: hidden !important;
 }
 
+/* Welcome view and subtle motion for first-visit orientation. */
+.welcome {
+    position: relative; overflow: hidden; min-height: 430px;
+    padding: clamp(28px, 5vw, 64px); border: 1px solid rgba(98,215,196,0.28);
+    border-radius: 16px;
+    background: linear-gradient(115deg, rgba(17,33,38,0.98), rgba(12,21,28,0.94));
+    box-shadow: 0 24px 70px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.07);
+    animation: welcome-in 0.7s ease both;
+}
+.welcome::after {
+    content: ""; position: absolute; width: 320px; height: 320px;
+    right: -100px; top: -120px; border: 1px solid rgba(242,169,74,0.22);
+    border-radius: 50%; box-shadow: 0 0 0 28px rgba(242,169,74,0.035), 0 0 0 58px rgba(242,169,74,0.025);
+    pointer-events: none;
+}
+.welcome-kicker { color: #f2a94a; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; }
+.welcome h2 { max-width: 720px; margin: 12px 0 10px; font-size: clamp(2rem, 5vw, 4.3rem); line-height: 0.98; letter-spacing: 0; }
+.welcome-copy { max-width: 620px; color: #a9b8c2; font-size: 1.03rem; line-height: 1.65; }
+.welcome-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; max-width: 790px; margin: 30px 0 28px; }
+.welcome-stat { padding: 13px 15px; border-left: 2px solid #2e9f98; background: rgba(255,255,255,0.035); }
+.welcome-stat strong { display: block; color: #e6edf3; font-size: 0.9rem; }
+.welcome-stat span { display: block; margin-top: 4px; color: #82939d; font-size: 0.73rem; }
+@keyframes welcome-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
+
 </style>
 """
 
@@ -542,6 +567,30 @@ def _pct_color(value) -> str:
 
 def inject_css(container=None) -> None:
     _render_html(container or st, CUSTOM_CSS)
+
+
+def render_landing(connections: dict, container=None):
+    """Render the first-visit welcome surface before the live terminal."""
+    target = container or st
+    statuses = "".join([
+        _pill("ALPACA · CONNECTED", "online") if connections.get("alpaca") else _pill("ALPACA · OFFLINE", "offline"),
+        _pill("GROQ AI · READY", "online") if connections.get("groq") else _pill("GROQ AI · OPTIONAL", "paper"),
+        _pill("PAPER MODE", "paper"),
+    ])
+    html = f"""
+    <section class="welcome">
+        <div class="welcome-kicker">{APP_NAME} / RESEARCH TERMINAL</div>
+        <h2>Make every market decision explainable.</h2>
+        <p class="welcome-copy">A paper-trading workspace where quantitative signals, specialized AI agents, and deterministic risk controls meet in one clear workflow.</p>
+        <div class="status-row">{statuses}</div>
+        <div class="welcome-grid">
+            <div class="welcome-stat"><strong>Agent-led analysis</strong><span>Market context to strategy selection</span></div>
+            <div class="welcome-stat"><strong>Risk before execution</strong><span>Every proposal meets account limits</span></div>
+            <div class="welcome-stat"><strong>Paper-first workflow</strong><span>Dry runs, live data, and audit events</span></div>
+        </div>
+    </section>
+    """
+    _render_html(target, html)
 
 
 def render_header(connections: dict, container=None, extra_pills: list | None = None):

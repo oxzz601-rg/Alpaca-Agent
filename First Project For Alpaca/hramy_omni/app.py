@@ -78,7 +78,14 @@ def load_ai(symbol: str, market_json: str, account_json: str) -> str:
     """Cached Groq decision keyed on the full quantitative context."""
     market = json.loads(market_json)
     account = json.loads(account_json)
-    return json.dumps(get_ai_decision(symbol, market, account))
+    return json.dumps(
+        ai_decide(
+            market,
+            account,
+            market.get("iv_rank"),
+            use_llm=bool(os.getenv("GROQ_API_KEY")),
+        )
+    )
 
 
 # ------------------------------------------------------------
@@ -100,6 +107,8 @@ if "active_section" not in st.session_state:
     st.session_state.active_section = "Overview"
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
+if "show_landing" not in st.session_state:
+    st.session_state.show_landing = True
 
 # ------------------------------------------------------------
 # Sidebar controls
@@ -173,6 +182,18 @@ dash.render_header(
     },
     extra_pills=[("REAL DATA · ALPACA IEX", "online")],
 )
+
+if st.session_state.show_landing:
+    dash.render_landing({
+        "alpaca": True,
+        "groq": groq_is_configured(),
+    })
+    _, enter_col, _ = st.columns([1, 1.2, 1])
+    with enter_col:
+        if st.button("Open QuantNova Terminal", type="primary", use_container_width=True):
+            st.session_state.show_landing = False
+            st.rerun()
+    st.stop()
 
 snapshot = latest_snapshot(data)
 prev_close = float(data["close"].iloc[-2]) if len(data) > 1 else snapshot["price"]
